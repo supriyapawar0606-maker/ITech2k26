@@ -21,28 +21,29 @@ const app = express();
 connectDB();
 
 // =========================================================
-// CORS
+// CORS CONFIGURATION
 // =========================================================
-//
-// ALLOWED_ORIGINS is a comma-separated list of frontend URLs, e.g.
-//   ALLOWED_ORIGINS=https://quizarena.vercel.app,https://www.yourdomain.com
-// Set this as an environment variable on your hosting platform (Render/Railway/etc.)
-// once your frontend has a real deployed URL. Localhost is always allowed too,
-// so local development keeps working without needing this variable set.
 
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://localhost:3000",
+  "https://itech2k26-1.onrender.com",
+];
+
+  // Additional origins from Render environment variable
   ...(process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+    ? process.env.ALLOWED_ORIGINS
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean)
     : []),
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without origin
-      // such as Postman
+      // Allow requests from Postman or server-to-server requests
       if (!origin) {
         return callback(null, true);
       }
@@ -51,14 +52,21 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(
-        new Error("Not allowed by CORS")
-      );
+      console.log("Blocked CORS origin:", origin);
+
+      return callback(new Error("Not allowed by CORS"));
     },
+
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+    allowedHeaders: ["Content-Type", "Authorization"],
 
     credentials: true,
   })
 );
+
+// Handle preflight requests
+app.options("*", cors());
 
 // =========================================================
 // BODY PARSER
@@ -71,7 +79,7 @@ app.use(express.json());
 // =========================================================
 
 app.get("/api/health", (req, res) => {
-  res.json({
+  res.status(200).json({
     status: "ok",
     message: "QuizArena backend is running",
   });
@@ -83,33 +91,18 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 
-app.use(
-  "/api/competitions",
-  competitionRoutes
-);
+app.use("/api/competitions", competitionRoutes);
 
-app.use(
-  "/api/questions",
-  questionRoutes
-);
+app.use("/api/questions", questionRoutes);
 
-app.use(
-  "/api/quiz",
-  quizRoutes
-);
+app.use("/api/quiz", quizRoutes);
 
-app.use(
-  "/api/leaderboard",
-  leaderboardRoutes
-);
+app.use("/api/leaderboard", leaderboardRoutes);
 
-app.use(
-  "/api/admin",
-  adminRoutes
-);
+app.use("/api/admin", adminRoutes);
 
 // =========================================================
-// 404
+// 404 HANDLER
 // =========================================================
 
 app.use((req, res) => {
@@ -145,7 +138,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(
-    `QuizArena backend running on port ${PORT}`
-  );
+  console.log(`QuizArena backend running on port ${PORT}`);
 });
