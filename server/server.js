@@ -30,16 +30,6 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://itech2k26-1.onrender.com",
 ];
-
-  // Additional origins from Render environment variable
-  ...(process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS
-        .split(",")
-        .map((origin) => origin.trim())
-        .filter(Boolean)
-    : []),
-];
-
 app.use(
   cors({
     origin: function (origin, callback) {
